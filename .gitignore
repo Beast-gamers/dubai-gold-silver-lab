@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Local tooling / skill data (not part of the site)
+.agents/
+skills-lock.json
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Vercel / build
+.vercel
