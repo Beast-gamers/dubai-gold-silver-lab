@@ -1,175 +1,157 @@
-/* ==========================================================================
-   SAIM GOLD — main.js
-   Scroll reveal, sticky nav, counters, forms, carousel accessibility,
-   back-to-top. Respects prefers-reduced-motion.
-   ========================================================================== */
+/* ============================================================
+   Dubai Gold Test Lab — Global Interactions
+   ============================================================ */
+
 (function () {
-  'use strict';
+  "use strict";
 
-  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var prefersReduced =
+    window.matchMedia &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  /* ----------------------------------------------------------------
-     1. Sticky nav shadow + active link highlight
-  ---------------------------------------------------------------- */
-  const nav = document.getElementById('siteNav');
-  const backTop = document.getElementById('backTop');
-  const sections = document.querySelectorAll('section[id], .purity-section');
+  document.documentElement.classList.remove("js-hidden");
 
-  function onScroll() {
-    if (!prefersReducedMotion) {
-      if (window.scrollY > 40) nav.classList.add('scrolled');
-      else nav.classList.remove('scrolled');
-    }
-
-    if (window.scrollY > 600) backTop.classList.add('show');
-    else backTop.classList.remove('show');
-
-    // Highlight active nav link based on scroll position
-    const scrollPos = window.scrollY + 120;
-    let currentId = 'home';
-    sections.forEach(function (sec) {
-      if (scrollPos >= sec.offsetTop && scrollPos < sec.offsetTop + sec.offsetHeight) {
-        currentId = sec.getAttribute('id') || 'home';
+  /* ---------- Navbar shrink on scroll ---------- */
+  var navbar = document.querySelector(".navbar-dg");
+  if (navbar) {
+    var onScroll = function () {
+      if (window.scrollY > 24) {
+        navbar.classList.add("is-scrolled");
+      } else {
+        navbar.classList.remove("is-scrolled");
       }
-    });
-    document.querySelectorAll('.navbar-nav .nav-link').forEach(function (link) {
-      const isActive = link.getAttribute('href') === '#' + currentId;
-      link.classList.toggle('active', isActive);
-    });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
   }
 
-  window.addEventListener('scroll', onScroll, { passive: true });
-  onScroll();
-
-  /* ----------------------------------------------------------------
-     2. Scroll reveal
-  ---------------------------------------------------------------- */
-  const revealEls = document.querySelectorAll('.reveal');
-
-  if ('IntersectionObserver' in window && !prefersReducedMotion) {
-    const io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('in-view');
-          io.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.16, rootMargin: '0px 0px -40px 0px' });
-
-    revealEls.forEach(function (el) { io.observe(el); });
-  } else {
-    // No IO or reduced motion: show everything immediately, no animation.
+  /* ---------- Scroll reveal ---------- */
+  var revealEls = document.querySelectorAll(".reveal, .reveal-reverse");
+  if ("IntersectionObserver" in window && !prefersReduced) {
+    var io = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("revealed");
+            io.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.15, rootMargin: "0px 0px -40px 0px" }
+    );
     revealEls.forEach(function (el) {
-      el.style.opacity = '1';
-      el.style.transform = 'none';
+      if (!el.classList.contains("revealed")) io.observe(el);
+    });
+  } else if (prefersReduced) {
+    revealEls.forEach(function (el) {
+      el.classList.add("revealed");
+    });
+  } else {
+    revealEls.forEach(function (el) {
+      el.classList.add("revealed");
     });
   }
 
-  /* ----------------------------------------------------------------
-     3. Animated counters
-  ---------------------------------------------------------------- */
-  const counters = document.querySelectorAll('[data-count]');
+  /* ---------- Animated counters ---------- */
+  var animateCount = function (el) {
+    var target = parseFloat(el.getAttribute("data-count") || "0");
+    var suffix = el.getAttribute("data-suffix") || "";
+    var duration = 1600;
+    var start = null;
 
-  function animateCounter(el) {
-    const target = parseInt(el.getAttribute('data-count'), 10);
-    const suffix = el.getAttribute('data-suffix') || '';
-    const duration = 1800;
-    const start = performance.now();
+    var step = function (ts) {
+      if (!start) start = ts;
+      var progress = Math.min((ts - start) / duration, 1);
+      var eased = 1 - Math.pow(1 - progress, 3);
+      var val = Math.round(target * eased);
+      el.textContent = val.toLocaleString() + suffix;
+      if (progress < 1) {
+        window.requestAnimationFrame(step);
+      } else {
+        el.textContent = target.toLocaleString() + suffix;
+      }
+    };
 
-    function tick(now) {
-      const progress = Math.min((now - start) / duration, 1);
-      // easeOutExpo for a luxurious deceleration
-      const eased = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
-      const value = Math.round(eased * target);
-      el.textContent = value.toLocaleString() + suffix;
-      if (progress < 1) requestAnimationFrame(tick);
-    }
-    requestAnimationFrame(tick);
-  }
+    window.requestAnimationFrame(step);
+  };
 
-  if ('IntersectionObserver' in window && !prefersReducedMotion) {
-    const counterIo = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        if (entry.isIntersecting) {
-          animateCounter(entry.target);
-          counterIo.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.5 });
-
-    counters.forEach(function (el) { counterIo.observe(el); });
+  var counters = document.querySelectorAll("[data-count]");
+  if ("IntersectionObserver" in window && !prefersReduced) {
+    var cio = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            animateCount(entry.target);
+            cio.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.6 }
+    );
+    counters.forEach(function (el) { cio.observe(el); });
   } else {
     counters.forEach(function (el) {
-      el.textContent = parseInt(el.getAttribute('data-count'), 10).toLocaleString();
+      el.textContent =
+        parseFloat(el.getAttribute("data-count") || "0").toLocaleString() +
+        (el.getAttribute("data-suffix") || "");
     });
   }
 
-  /* ----------------------------------------------------------------
-     4. Consultation form
-  ---------------------------------------------------------------- */
-  const form = document.getElementById('consultationForm');
-  const formNote = document.getElementById('formNote');
-
+  /* ---------- Contact form (demo submission) ---------- */
+  var form = document.getElementById("contactForm");
+  var successBox = document.getElementById("formSuccess");
   if (form) {
-    form.addEventListener('submit', function (e) {
+    form.addEventListener("submit", function (e) {
       e.preventDefault();
-      e.stopPropagation();
 
-      const valid = form.checkValidity();
-      form.classList.add('was-validated');
+      if (!form.checkValidity()) {
+        form.classList.add("was-validated");
+        return;
+      }
 
-      if (valid) {
-        const name = form.querySelector('#name').value.trim().split(' ')[0];
-        const interest = form.querySelector('#interest').value;
-        formNote.textContent =
-          'Thank you, ' + name + '! Our team will call you within 2 hours to confirm your ' + interest + ' consultation.';
+      var btn = form.querySelector('button[type="submit"]');
+      var original = btn.innerHTML;
+      btn.disabled = true;
+      btn.textContent = "Submitting…";
+
+      // Simulate network request — replace with your endpoint.
+      window.setTimeout(function () {
+        btn.disabled = false;
+        btn.innerHTML = original;
+        form.classList.remove("was-validated");
         form.reset();
-        form.classList.remove('was-validated');
-      }
+        if (successBox) {
+          successBox.classList.remove("d-none");
+          successBox.scrollIntoView({ behavior: prefersReduced ? "auto" : "smooth", block: "center" });
+          window.setTimeout(function () {
+            successBox.classList.add("d-none");
+          }, 6000);
+        }
+      }, 1100);
     });
   }
 
-  /* ----------------------------------------------------------------
-     5. Newsletter form
-  ---------------------------------------------------------------- */
-  const nlForm = document.getElementById('newsletterForm');
-  const nlNote = document.getElementById('newsletterNote');
-
-  if (nlForm) {
-    nlForm.addEventListener('submit', function (e) {
-      e.preventDefault();
-      const email = nlForm.querySelector('#nlEmail');
-      if (email.checkValidity()) {
-        nlNote.textContent = 'Welcome to the circle! Previews and exclusive invites are on their way to ' + email.value + '.';
-        nlForm.reset();
-      } else {
-        email.classList.add('is-invalid');
-        nlNote.textContent = 'Please enter a valid email address.';
-      }
+  /* ---------- Back to top ---------- */
+  var topBtn = document.getElementById("backToTop");
+  if (topBtn) {
+    window.addEventListener(
+      "scroll",
+      function () {
+        if (window.scrollY > 500) {
+          topBtn.classList.add("show");
+        } else {
+          topBtn.classList.remove("show");
+        }
+      },
+      { passive: true }
+    );
+    topBtn.addEventListener("click", function () {
+      window.scrollTo({ top: 0, behavior: prefersReduced ? "auto" : "smooth" });
     });
   }
 
-  /* ----------------------------------------------------------------
-     6. Testimonial carousel — pause on hover/focus per a11y best practice
-  ---------------------------------------------------------------- */
-  const tCarouselEl = document.getElementById('testimonialCarousel');
-  if (tCarouselEl && typeof bootstrap !== 'undefined') {
-    const tCarousel = bootstrap.Carousel.getOrCreateInstance(tCarouselEl, {
-      interval: 6000,
-      pause: 'hover'
-    });
-
-    ['mouseenter', 'focusin'].forEach(function (evt) {
-      tCarouselEl.addEventListener(evt, function () { tCarousel.pause(); });
-    });
-    ['mouseleave', 'focusout'].forEach(function (evt) {
-      tCarouselEl.addEventListener(evt, function () { tCarousel.cycle(); });
-    });
-  }
-
-  /* ----------------------------------------------------------------
-     7. Auto-set footer year
-  ---------------------------------------------------------------- */
-  const yearEl = document.getElementById('year');
-  if (yearEl) yearEl.textContent = new Date().getFullYear();
+  /* ---------- Current year ---------- */
+  document.querySelectorAll("[data-year]").forEach(function (el) {
+    el.textContent = new Date().getFullYear();
+  });
 })();

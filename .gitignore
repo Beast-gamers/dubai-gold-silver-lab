@@ -20,3 +20,8 @@ Thumbs.db
 
 # Vercel / build
 .vercel
+
+# Stray local backups (everything outside public/ is a backup)
+public(Copy)/
+publica/
+publicb/
