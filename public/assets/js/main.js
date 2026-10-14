@@ -1,5 +1,5 @@
 /* ============================================================
-   Dubai Silver Test Lab — Global Interactions
+   Dubai Gold & Silver Lab — Global Interactions
    ============================================================ */
 
 (function () {
